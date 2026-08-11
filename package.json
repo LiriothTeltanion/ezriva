@@ -1,0 +1,23 @@
+{
+  "name": "ezriva-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Ezriva hackathon workspace",
+  "license": "MIT",
+  "author": "Kevin Cusnir",
+  "type": "module",
+  "packageManager": "npm@11.9.0",
+  "engines": {
+    "node": ">=24.14.0 <25",
+    "npm": ">=11 <12"
+  },
+  "workspaces": [
+    "apps/web"
+  ],
+  "scripts": {
+    "lint:web": "npm --workspace @ezriva/web run lint",
+    "typecheck:web": "npm --workspace @ezriva/web run typecheck",
+    "test:web": "npm --workspace @ezriva/web run test",
+    "build:web": "npm --workspace @ezriva/web run build"
+  }
+}

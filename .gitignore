@@ -1,0 +1,39 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Node and frontend output
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Local/private runtime data
+.cache/
+artifacts/private/
+uploads/
+tmp/
+*.local.db
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Never import the outer planning attachments into this repository
+project_sources/
