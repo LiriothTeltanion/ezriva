@@ -16,7 +16,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 FORBIDDEN_PATH_WORDS = {
     "enrollment",
-    "agreement-kevin",
+    "private-agreement",
     "passport",
     "project_sources",
     "private_document",
