@@ -31,6 +31,12 @@ class Settings(BaseSettings):
     max_image_bytes: int = Field(default=3_670_016, ge=1, le=3_670_016)
     max_pdf_bytes: int = Field(default=4_194_304, ge=1, le=4_194_304)
     max_pdf_pages: int = Field(default=3, ge=1, le=3)
+    aws_region: str | None = None
+    bedrock_model_id: str | None = None
+    model_max_tokens: int = Field(default=1_800, ge=256, le=4_096)
+    model_max_cycles: int = Field(default=1, ge=1, le=1)
+    ai_fixture_live_enabled: bool = False
+    ai_fixture_max_inferences: int = Field(default=8, ge=1, le=8)
 
     @field_validator("app_timezone")
     @classmethod
@@ -52,3 +58,31 @@ class Settings(BaseSettings):
         except (KeyError, ValueError) as error:
             raise ValueError("app_timezone must be a valid IANA time zone") from error
         return value
+
+    @field_validator("aws_region")
+    @classmethod
+    def aws_region_must_be_public_name(cls, value: str | None) -> str | None:
+        """Reject empty or account-bearing AWS region values."""
+
+        if value is None:
+            return None
+        normalized = value.strip()
+        if not normalized or not normalized.replace("-", "").isalnum():
+            raise ValueError("aws_region must be a standard public AWS region name")
+        return normalized
+
+    @field_validator("bedrock_model_id")
+    @classmethod
+    def model_id_must_not_expose_an_account(cls, value: str | None) -> str | None:
+        """Allow public model/profile identifiers but reject account-bearing ARNs."""
+
+        if value is None:
+            return None
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("bedrock_model_id cannot be blank")
+        if normalized.startswith("arn:"):
+            raise ValueError(
+                "bedrock_model_id must be a public model or inference-profile ID, not an ARN"
+            )
+        return normalized

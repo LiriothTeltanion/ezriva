@@ -64,6 +64,10 @@ TASKS: dict[str, tuple[tuple[str, ...], ...]] = {
         ("uv", "run", "pytest"),
         ("npm", "run", "test:web"),
     ),
+    "ai-fixtures": (
+        ("uv", "run", "python", "scripts/generate_demo_fixtures.py", "--check"),
+        ("uv", "run", "pytest", "apps/api/tests/ai_spike"),
+    ),
     "build": (
         ("uv", "run", "python", "-m", "compileall", "-q", "apps/api/src"),
         ("npm", "run", "build:web"),

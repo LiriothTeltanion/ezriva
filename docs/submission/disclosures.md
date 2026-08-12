@@ -19,9 +19,17 @@
 - The baseline is a purpose-built monorepo using open-source packages declared
   in `pyproject.toml` and `apps/web/package.json`.
 - Package lockfiles record the exact resolved versions.
+- The item-2 evaluation lab uses the open-source `strands-agents`, Boto3,
+  Botocore, Pydantic, and Pillow packages pinned in `pyproject.toml`/`uv.lock`.
 
 ## Assets and data
 
-- Public fixtures are synthetic and will include provenance.
+- Eight public Hebrew fixtures were written for Ezriva and rendered by the
+  repository's deterministic Pillow generator. They were not derived from a
+  private or real-world document.
+- Fixture rendering uses a locally installed Hebrew-capable DejaVu Sans or
+  Arial font with libraqm shaping. No third-party font file is redistributed.
+- Fixture source, scenarios, expected safety behavior, and integrity hashes are
+  documented in `fixtures/provenance.md` and `fixtures/manifest.toml`.
 - No real family document, private contract, signature, address, or identifier
   may appear in the repository, demo, screenshots, or video.

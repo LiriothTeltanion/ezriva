@@ -25,6 +25,7 @@ coverage/
 # Local/private runtime data
 .cache/
 artifacts/private/
+artifacts/item-2-bedrock-evaluation.json
 uploads/
 tmp/
 *.local.db

@@ -1,5 +1,5 @@
 param(
-    [ValidateSet("setup", "lint", "typecheck", "test", "build", "secret-scan", "verify")]
+    [ValidateSet("setup", "lint", "typecheck", "test", "ai-fixtures", "build", "secret-scan", "verify")]
     [string]$Task = "verify"
 )
 

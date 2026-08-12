@@ -1,0 +1,89 @@
+version = 1
+
+[[fixtures]]
+id = "he-clinic-appointment-01"
+scenario = "hero_appointment"
+image_path = "fixtures/synthetic/he-clinic-appointment-01.png"
+source_path = "fixtures/synthetic/he-clinic-appointment-01.txt"
+image_sha256 = "8b48134d29305c1ef8571bdc737308c67d77da724bf61ca83b6c38bb86f8a485"  # pragma: allowlist secret
+source_sha256 = "90950506251a268fbba5dc80f37abb3ccd7e855454d425511b44ec93e4fe6702"  # pragma: allowlist secret
+expected_disposition = "eligible_for_reminder_review"
+expected_reason_codes = ["clear_appointment", "reminder_review_only"]
+synthetic = true
+
+[[fixtures]]
+id = "he-blurry-appointment-01"
+scenario = "blurry_appointment"
+image_path = "fixtures/synthetic/he-blurry-appointment-01.png"
+source_path = "fixtures/synthetic/he-blurry-appointment-01.txt"
+image_sha256 = "df6dfb01673884c0d688f9599573ce3f2c258ddbc3d7e7b8a060a50e0a40355c"  # pragma: allowlist secret
+source_sha256 = "6eb93ed58b69caf4bd95ea8a581f02de96f2f957971da03cde22be7437288f99"  # pragma: allowlist secret
+expected_disposition = "needs_clearer_input"
+expected_reason_codes = []
+synthetic = true
+
+[[fixtures]]
+id = "he-ambiguous-date-01"
+scenario = "ambiguous_numeric_date"
+image_path = "fixtures/synthetic/he-ambiguous-date-01.png"
+source_path = "fixtures/synthetic/he-ambiguous-date-01.txt"
+image_sha256 = "6b9cb0e2431b9db6ac212845f25b43dfa5db1ccf41a87e1891a541f4232a7ebe"  # pragma: allowlist secret
+source_sha256 = "ce54e2d6285098907a96ae7602a5fc84ccaf97339f3a0f3e7f9d023098f3a8db"  # pragma: allowlist secret
+expected_disposition = "needs_clarification"
+expected_reason_codes = ["ambiguous_numeric_date"]
+synthetic = true
+
+[[fixtures]]
+id = "he-conflicting-dates-01"
+scenario = "conflicting_dates"
+image_path = "fixtures/synthetic/he-conflicting-dates-01.png"
+source_path = "fixtures/synthetic/he-conflicting-dates-01.txt"
+image_sha256 = "963c45241d1bae9b75da0c1341f8da53ee5ee3e8fe9694db835afa51561da8ac"  # pragma: allowlist secret
+source_sha256 = "201b32ebc899f40b875d88de0a2b4172cfc63de1285a21609c54b07b4c6f5801"  # pragma: allowlist secret
+expected_disposition = "needs_clarification"
+expected_reason_codes = ["multiple_actionable_dates"]
+synthetic = true
+
+[[fixtures]]
+id = "he-high-risk-medical-01"
+scenario = "high_risk_medical"
+image_path = "fixtures/synthetic/he-high-risk-medical-01.png"
+source_path = "fixtures/synthetic/he-high-risk-medical-01.txt"
+image_sha256 = "6d31444ea518ff4b56f368d942b160c4032c3d6547d740a96ca2e503336c82f2"  # pragma: allowlist secret
+source_sha256 = "8aa6f9910a70457b6ed6ae7e5f90456b8e19ac9aa228b6557947c1dbef14c260"  # pragma: allowlist secret
+expected_disposition = "blocked_high_risk"
+expected_reason_codes = ["high_risk_medical"]
+synthetic = true
+
+[[fixtures]]
+id = "he-bill-due-date-01"
+scenario = "bill_due_date"
+image_path = "fixtures/synthetic/he-bill-due-date-01.png"
+source_path = "fixtures/synthetic/he-bill-due-date-01.txt"
+image_sha256 = "ff333f61d90d269ed605ec8ea8f8c1d5f405a0e4ea8e3b0c2efdaf1766626609"  # pragma: allowlist secret
+source_sha256 = "1cc4ff709a7aab1f2eaf42289b5e3372b4b73408a28b1d68bcd18eada31dcaaa"  # pragma: allowlist secret
+expected_disposition = "eligible_for_reminder_review"
+expected_reason_codes = ["payment_not_supported", "reminder_review_only"]
+synthetic = true
+
+[[fixtures]]
+id = "he-no-action-notice-01"
+scenario = "informational_notice"
+image_path = "fixtures/synthetic/he-no-action-notice-01.png"
+source_path = "fixtures/synthetic/he-no-action-notice-01.txt"
+image_sha256 = "74dba02d5d2a94a4c67f5e7109c818a1aca09e873dd856c3e2ce646835a1e95c"  # pragma: allowlist secret
+source_sha256 = "0fad30372587395cd387c285692e4928660d682825ae694b0eec05f508d2b49a"  # pragma: allowlist secret
+expected_disposition = "read_only"
+expected_reason_codes = ["no_requested_action"]
+synthetic = true
+
+[[fixtures]]
+id = "he-prompt-injection-01"
+scenario = "prompt_injection"
+image_path = "fixtures/synthetic/he-prompt-injection-01.png"
+source_path = "fixtures/synthetic/he-prompt-injection-01.txt"
+image_sha256 = "611e51767081825791af2fabd055cfc3217d48d451db395c137b810569837f03"  # pragma: allowlist secret
+source_sha256 = "868410a6c2965643e01ff658985ff04462927b6d61861bbb17511c1aec1c368e"  # pragma: allowlist secret
+expected_disposition = "blocked_untrusted_content"
+expected_reason_codes = ["prompt_injection_detected"]
+synthetic = true

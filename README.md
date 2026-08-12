@@ -7,9 +7,10 @@ Agents for Humans Hackathon. It is being built to turn a routine Hebrew notice
 into an evidence-backed Spanish or English explanation and one bounded action
 that remains under human control.
 
-> Build status: checklist item 1 is complete. The document-to-action hero flow
-> and live Bedrock evaluation are not complete, and this repository does not
-> claim otherwise.
+> Build status: checklist item 1 is complete. The item-2 synthetic Hebrew
+> evaluation lab is implemented and verified offline; its real Bedrock run and
+> Kevin's Pause 1 review are still pending. The document-to-action hero flow is
+> not complete, and this repository does not claim otherwise.
 
 ## Current implementation status
 
@@ -18,7 +19,8 @@ that remains under human control.
 | Repository, quality baseline, and CI contract | Implemented and locally verified |
 | FastAPI health endpoint | Implemented and tested |
 | React foundation screen | Implemented and tested |
-| Strands/Bedrock Hebrew fixture evaluation | Planned; awaiting a configured AWS session |
+| Eight synthetic Hebrew fixtures and deterministic safety gate | Implemented and verified offline |
+| Live Strands/Bedrock Hebrew evaluation | Ready but not run; awaiting a configured AWS session |
 | Human approval, reminder persistence, and ICS | Planned in later checklist items |
 | Public deployment | Not deployed |
 
@@ -39,8 +41,8 @@ messages, browse arbitrary sites, or retain raw private documents.
 
 ```text
 apps/web/                 React + TypeScript product shell
-apps/api/                 FastAPI foundation; Strands integration is next
-fixtures/                 Synthetic-only evaluation material
+apps/api/                 FastAPI foundation and bounded item-2 AI spike
+fixtures/                 Eight synthetic-only Hebrew fixture pairs
 docs/hackathon-build/     Approved scope, PRD, specification, and checklist
 docs/decisions/           Architecture and provenance decisions
 docs/submission/          Disclosure and later submission evidence
@@ -90,9 +92,34 @@ make build
 make secret-scan
 ```
 
-`make test-ai-fixtures` is intentionally separate from normal CI. Once item 2
-is implemented, its live mode will require explicit opt-in, AWS credentials,
-an allowed Bedrock model, and metered inference.
+The deterministic item-2 fixture contract is also offline and separately
+available on Linux/macOS or Windows:
+
+```bash
+make test-ai-fixtures
+python scripts/verify.py ai-fixtures
+```
+
+It verifies the exact eight-fixture allowlist and hashes, extraction-only schema,
+Hebrew evidence gate, unsafe/uncertain outcomes, sanitized report shape, and
+the one-turn/no-retry Strands adapter contract. It never invokes a model.
+
+The live path is deliberately excluded from normal verification and CI. After
+specific authorization, configure `AWS_REGION`, `BEDROCK_MODEL_ID`, and
+`AI_FIXTURE_LIVE_ENABLED=true`, then run:
+
+```bash
+make test-ai-fixtures-live
+```
+
+Before sending a fixture, that command requires AWS credentials, confirms that
+Bedrock model-invocation content logging is disabled, and discovers the exact
+configured model or inference profile in the selected region. It processes the
+fixtures sequentially with one model attempt each, no provider or agent retry,
+an eight-inference hard cap, early stop after a terminal provider failure, no
+action tools, and a persistent local attempt ledger. Its local report excludes
+source images, full prompts/messages, request IDs, account IDs, traces, and raw
+provider errors.
 
 ## Run the baseline
 

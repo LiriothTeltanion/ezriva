@@ -22,5 +22,8 @@ verify:
 	python scripts/verify.py verify
 
 test-ai-fixtures:
-	@echo "Checklist item 2 is not implemented yet; no model was invoked."
-	@exit 1
+	python scripts/verify.py ai-fixtures
+
+.PHONY: test-ai-fixtures-live
+test-ai-fixtures-live:
+	uv run python scripts/run_ai_fixture_eval.py --live --acknowledge-metered-bedrock
