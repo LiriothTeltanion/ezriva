@@ -125,10 +125,31 @@ def test_preflight_accepts_configured_active_inference_profile(
     """An active system profile is discovered by configured public ID."""
 
     profile_id = "global.anthropic.synthetic-vision-v1"
+    foundation_model_id = "anthropic.synthetic-vision-v1"
     bedrock = FakeBedrock(
+        foundation_models=[
+            {
+                "modelId": foundation_model_id,
+                "inputModalities": ["TEXT", "IMAGE"],
+                "modelLifecycle": {"status": "ACTIVE"},
+            }
+        ],
         profile_pages=(
-            {"inferenceProfileSummaries": [{"inferenceProfileId": profile_id, "status": "ACTIVE"}]},
-        )
+            {
+                "inferenceProfileSummaries": [
+                    {
+                        "inferenceProfileId": profile_id,
+                        "status": "ACTIVE",
+                        "models": [
+                            {
+                                "modelArn": "arn:aws:bedrock:us-test-1::foundation-model/"
+                                f"{foundation_model_id}"
+                            }
+                        ],
+                    }
+                ]
+            },
+        ),
     )
     session = FakeSession(bedrock)
     _install_session(monkeypatch, session)
@@ -136,6 +157,54 @@ def test_preflight_accepts_configured_active_inference_profile(
     result = preflight.verify_live_preflight("us-test-1", profile_id)
 
     assert result is session
+
+
+def test_preflight_refuses_profile_without_proven_image_capability(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """An active profile is insufficient when its underlying model is unresolved."""
+
+    profile_id = "global.anthropic.unresolved-v1"
+    bedrock = FakeBedrock(
+        profile_pages=(
+            {
+                "inferenceProfileSummaries": [
+                    {
+                        "inferenceProfileId": profile_id,
+                        "status": "ACTIVE",
+                        "models": [],
+                    }
+                ]
+            },
+        )
+    )
+    _install_session(monkeypatch, FakeSession(bedrock))
+
+    with pytest.raises(preflight.PreflightError) as captured:
+        preflight.verify_live_preflight("us-test-1", profile_id)
+
+    assert captured.value.code == "bedrock_model_capability_unverified"
+
+
+def test_preflight_refuses_visible_text_only_model(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A visible active text model cannot be used for the PNG evaluation."""
+
+    model_id = "anthropic.synthetic-text-v1"
+    bedrock = FakeBedrock(
+        foundation_models=[
+            {
+                "modelId": model_id,
+                "inputModalities": ["TEXT"],
+                "modelLifecycle": {"status": "ACTIVE"},
+            }
+        ]
+    )
+    _install_session(monkeypatch, FakeSession(bedrock))
+
+    with pytest.raises(preflight.PreflightError) as captured:
+        preflight.verify_live_preflight("us-test-1", model_id)
+
+    assert captured.value.code == "bedrock_model_capability_unverified"
 
 
 def test_preflight_refuses_bedrock_content_logging(

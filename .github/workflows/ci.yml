@@ -10,8 +10,13 @@ permissions:
 
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    name: Verify (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
     steps:
       - name: Check out repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -40,3 +45,6 @@ jobs:
 
       - name: Run the local verification contract
         run: python scripts/verify.py verify
+
+      - name: Run the deterministic item-2 fixture contract
+        run: python scripts/verify.py ai-fixtures

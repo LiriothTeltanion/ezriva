@@ -83,6 +83,7 @@ class ReasonCode(StrEnum):
     MULTIPLE_ACTIONABLE_DATES = "multiple_actionable_dates"
     MISSING_DATE = "missing_date"
     MISSING_TIME = "missing_time"
+    MISSING_LOCATION = "missing_location"
     NO_REQUESTED_ACTION = "no_requested_action"
     PAYMENT_NOT_SUPPORTED = "payment_not_supported"
     REMINDER_REVIEW_ONLY = "reminder_review_only"
@@ -252,6 +253,8 @@ def evaluate_candidate(candidate: DocumentBriefCandidate, source_text: str) -> G
             missing.append(ReasonCode.MISSING_DATE)
         if not _confirmed_values(candidate, FactKey.TIME):
             missing.append(ReasonCode.MISSING_TIME)
+        if not _confirmed_values(candidate, FactKey.LOCATION):
+            missing.append(ReasonCode.MISSING_LOCATION)
         if not requested_actions:
             missing.append(ReasonCode.NO_REQUESTED_ACTION)
         if missing:

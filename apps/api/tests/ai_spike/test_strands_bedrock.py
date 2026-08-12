@@ -20,8 +20,8 @@ from tests.ai_spike.candidates import hero_candidate
 class FakeMetrics:
     """Small metrics shape matching the allowlisted adapter reads."""
 
-    def __init__(self) -> None:
-        self.cycle_count = 1
+    def __init__(self, cycle_count: int = 1) -> None:
+        self.cycle_count = cycle_count
         self.accumulated_usage = {
             "inputTokens": 900,
             "outputTokens": 180,
@@ -38,8 +38,8 @@ class RetryConfig(Protocol):
 class FakeResult:
     """Structured result without messages, prompts, or traces."""
 
-    def __init__(self, candidate: DocumentBriefCandidate | None) -> None:
-        self.metrics = FakeMetrics()
+    def __init__(self, candidate: DocumentBriefCandidate | None, cycle_count: int = 1) -> None:
+        self.metrics = FakeMetrics(cycle_count)
         self.structured_output = candidate
 
 
@@ -50,9 +50,11 @@ class FakeAgent:
         self,
         candidate: DocumentBriefCandidate | None,
         error: Exception | None = None,
+        cycle_count: int = 1,
     ) -> None:
         self._candidate = candidate
         self._error = error
+        self._cycle_count = cycle_count
         self.calls = 0
         self.prompt: object | None = None
         self.invocation_kwargs: dict[str, object] = {}
@@ -63,7 +65,7 @@ class FakeAgent:
         self.invocation_kwargs = kwargs
         if self._error is not None:
             raise self._error
-        return FakeResult(self._candidate)
+        return FakeResult(self._candidate, self._cycle_count)
 
 
 class CapturingFactory:
@@ -158,3 +160,23 @@ def test_adapter_does_not_retry_or_log_raw_provider_failure(
     assert observation.failure_code == "model_invocation_failed"
     assert sensitive_detail not in caplog.text
     assert "private-sentinel" not in caplog.text
+
+
+def test_adapter_reports_observed_cycle_limit_violation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A cycle violation is reported honestly and remains a terminal failure."""
+
+    agent = FakeAgent(hero_candidate(), cycle_count=2)
+    _install_fakes(monkeypatch, agent)
+    analyzer = strands_bedrock.StrandsBedrockAnalyzer(
+        boto_session=object(),
+        region="us-test-1",
+        model_id="public.test-model-v1",
+        max_tokens=1_800,
+    )
+
+    observation = analyzer.analyze(b"\x89PNG\r\n\x1a\npublic-synthetic-image")
+
+    assert observation.cycle_count == 2
+    assert observation.failure_code == "inference_cycle_limit_exceeded"

@@ -52,13 +52,15 @@ scripts/                  Portable setup and verification entry points
 
 ## Prerequisites
 
-- Python 3.12
-- Node.js 24
-- npm 11
-- `uv`
+- Python 3.12 (3.12.13 verified)
+- Node.js 24.14.0
+- npm 11.9.0
+- `uv` 0.11.33
 - Git
 
-Python 3.12 is the tested project version for this build.
+These are Ezriva's reproducible project versions. Newer global Python or Node
+installations may coexist on the workstation, but they are not the evidence
+environment for this build.
 
 ## Local setup
 
@@ -70,6 +72,13 @@ On Windows PowerShell:
 
 ```powershell
 ./scripts/verify.ps1 setup
+```
+
+If Windows marks the PowerShell wrapper as downloaded, use the same portable
+Python entry point instead of changing the machine-wide execution policy:
+
+```powershell
+python scripts/verify.py setup
 ```
 
 The setup command installs locked local dependencies and may contact their
@@ -103,6 +112,7 @@ python scripts/verify.py ai-fixtures
 It verifies the exact eight-fixture allowlist and hashes, extraction-only schema,
 Hebrew evidence gate, unsafe/uncertain outcomes, sanitized report shape, and
 the one-turn/no-retry Strands adapter contract. It never invokes a model.
+See the current [offline verification evidence](docs/evaluations/item-2-offline-verification.md).
 
 The live path is deliberately excluded from normal verification and CI. After
 specific authorization, configure `AWS_REGION`, `BEDROCK_MODEL_ID`, and

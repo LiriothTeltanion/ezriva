@@ -30,6 +30,16 @@ def test_manifest_contains_exactly_eight_verified_fixture_pairs() -> None:
     verify_manifest(ROOT, manifest)
     assert {fixture.id for fixture in manifest.fixtures} == EXPECTED_FIXTURE_IDS
     assert len(manifest.fixtures) == 8
+    hero = next(
+        fixture for fixture in manifest.fixtures if fixture.id == "he-clinic-appointment-01"
+    )
+    assert {fact.key.value for fact in hero.expected_facts} == {
+        "sender",
+        "date",
+        "time",
+        "location",
+        "requested_action",
+    }
 
 
 def test_all_fixture_images_have_consistent_safe_dimensions() -> None:

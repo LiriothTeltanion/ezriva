@@ -42,6 +42,7 @@ class FixtureSpec:
     title: str
     lines: tuple[str, ...]
     expected_reason_codes: tuple[str, ...] = ()
+    expected_facts: tuple[tuple[str, str, str | None], ...] = ()
     blur_radius: float = 0.0
 
     @property
@@ -64,6 +65,17 @@ FIXTURES = (
             "נא להגיע 15 דקות מראש ולהביא כרטיס קופה.",
         ),
         expected_reason_codes=("clear_appointment", "reminder_review_only"),
+        expected_facts=(
+            ("sender", "מרכז בריאות אופק", None),
+            ("date", "18.08.2026", "2026-08-18"),
+            ("time", "10:30", "10:30"),
+            ("location", "רחוב הדוגמה 12, באר שבע", None),
+            (
+                "requested_action",
+                "נא להגיע 15 דקות מראש ולהביא כרטיס קופה",
+                None,
+            ),
+        ),
     ),
     FixtureSpec(
         identifier="he-blurry-appointment-01",
@@ -261,10 +273,20 @@ def _manifest_text() -> str:
                 "expected_reason_codes = ["
                 + ", ".join(f'"{code}"' for code in spec.expected_reason_codes)
                 + "]",
-                "synthetic = true",
-                "",
             )
         )
+        if spec.expected_facts:
+            lines.append("expected_facts = [")
+            for key, fragment, normalized_value in spec.expected_facts:
+                fields = [
+                    f'key = "{key}"',
+                    f'required_source_fragment = "{fragment}"',
+                ]
+                if normalized_value is not None:
+                    fields.append(f'normalized_value = "{normalized_value}"')
+                lines.append("  { " + ", ".join(fields) + " },")
+            lines.append("]")
+        lines.extend(("synthetic = true", ""))
     return "\n".join(lines)
 
 
@@ -286,9 +308,22 @@ def check_fixtures() -> None:
     verify_manifest(ROOT, manifest)
     by_id = {fixture.id: fixture for fixture in manifest.fixtures}
     for spec in FIXTURES:
-        source_path = ROOT / by_id[spec.identifier].source_path
+        record = by_id[spec.identifier]
+        source_path = ROOT / record.source_path
         if source_path.read_text(encoding="utf-8") != spec.source_text:
             raise RuntimeError(f"logical fixture source differs from generator: {spec.identifier}")
+        expected_facts = tuple(
+            (fact.key.value, fact.required_source_fragment, fact.normalized_value)
+            for fact in record.expected_facts
+        )
+        if (
+            record.scenario != spec.scenario
+            or record.expected_disposition.value != spec.expected_disposition
+            or tuple(code.value for code in record.expected_reason_codes)
+            != spec.expected_reason_codes
+            or expected_facts != spec.expected_facts
+        ):
+            raise RuntimeError(f"fixture expectations differ from generator: {spec.identifier}")
 
 
 def main() -> int:

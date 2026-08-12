@@ -27,11 +27,14 @@ def test_live_fixture_evaluation_is_off_and_capped_by_default() -> None:
 def test_account_bearing_model_arn_is_rejected() -> None:
     """Reports use public model/profile IDs rather than AWS account ARNs."""
 
-    with pytest.raises(ValidationError):
+    account_id = "123456789012"
+    with pytest.raises(ValidationError) as captured:
         Settings(
             _env_file=None,
-            bedrock_model_id="arn:aws:bedrock:region:123456789012:inference-profile/example",
+            bedrock_model_id=f"arn:aws:bedrock:region:{account_id}:inference-profile/example",
         )
+
+    assert account_id not in str(captured.value)
 
 
 def test_more_than_eight_inferences_is_rejected() -> None:

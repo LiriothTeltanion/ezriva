@@ -46,7 +46,7 @@ The architecture intentionally uses **one coordinating agent**, not a multi-agen
 
 ### Agent/backend
 
-- Python 3.11 or 3.12, selected after the AgentCore deployment spike.
+- Python 3.12, fixed for the repository, local verification, and CI.
 - FastAPI for local development/BFF endpoints.
 - `strands-agents` with a Bedrock multimodal model.
 - Pydantic v2 schemas and discriminated unions.
@@ -385,7 +385,10 @@ Do not store raw image/PDF bytes or full Hebrew text in DynamoDB. A redacted sou
 - Existing receipt is returned when payload hashes match.
 - Mismatched payload under a reused key is a conflict.
 
-## File Structure
+## Target File Structure
+
+This is the intended end-state tree. Directories and dependencies are added
+only when their checklist item produces real implementation or evidence.
 
 ```text
 ezriva/
@@ -699,15 +702,19 @@ The model does not control permissions, approval validity, ownership, state tran
 ### Cost budget
 
 - Maximum 3 pages, 3.5 MiB per image, and 4 MiB per PDF. These conservative limits remain below current Bedrock Converse upstream limits.
-- Target one multimodal analysis call plus at most one bounded repair call.
-- Bounded agent cycles and tokens.
-- One jittered retry for throttling; then a safe failure.
+- Item 2 uses exactly one multimodal attempt per fixture, with zero repair,
+  provider retry, agent retry, or fallback.
+- Later coordinator work may add at most one bounded repair and one controlled
+  throttling retry only after the relevant checklist item and tests authorize it.
+- Agent cycles and tokens remain bounded in every phase.
 - No Textract, Bedrock Data Automation, AgentCore Memory, Gateway, Browser, or Code Interpreter in the critical path.
 - Record per-fixture latency/token/cost estimates during the model spike.
 
 ### Model fallback
 
-The backend supports a configured primary and evaluated fallback model. Fallback occurs only for availability/throttling, not to hide low-confidence extraction. Both must pass the Hebrew fixture gate before use.
+Item 2 has no model fallback. A later coordinator may support a configured
+primary and separately evaluated fallback only for availability/throttling, not
+to hide low-confidence extraction. Both must pass the Hebrew fixture gate.
 
 ## Testing Strategy
 
@@ -777,7 +784,7 @@ make build
 make verify
 ```
 
-If a Makefile is not portable enough on Kevin's Windows environment, provide equivalent `scripts/verify.py` and documented `pnpm`/Python commands. A Windows-friendly PowerShell entry point may be added, but must call the same checks.
+If a Makefile is not portable enough on Kevin's Windows environment, provide equivalent `scripts/verify.py` and documented npm/Python commands. A Windows-friendly PowerShell entry point may be added, but must call the same checks.
 
 ## Deployment Plan
 

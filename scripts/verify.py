@@ -15,6 +15,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+NPM = "npm.cmd" if os.name == "nt" else "npm"
 
 
 def _environment() -> dict[str, str]:
@@ -36,7 +37,7 @@ def _run(command: Sequence[str]) -> None:
         subprocess.CalledProcessError: When the command exits unsuccessfully.
     """
 
-    print(f"\n▶ {' '.join(command)}", flush=True)
+    print(f"\nRUN {' '.join(command)}", flush=True)
     subprocess.run(
         command,
         cwd=ROOT,
@@ -48,21 +49,21 @@ def _run(command: Sequence[str]) -> None:
 TASKS: dict[str, tuple[tuple[str, ...], ...]] = {
     "setup": (
         ("uv", "sync", "--frozen"),
-        ("npm", "ci"),
+        (NPM, "ci"),
     ),
     "lint": (
         ("uv", "lock", "--check"),
         ("uv", "run", "ruff", "check", "."),
         ("uv", "run", "ruff", "format", "--check", "."),
-        ("npm", "run", "lint:web"),
+        (NPM, "run", "lint:web"),
     ),
     "typecheck": (
         ("uv", "run", "mypy", "apps/api/src", "apps/api/tests", "scripts"),
-        ("npm", "run", "typecheck:web"),
+        (NPM, "run", "typecheck:web"),
     ),
     "test": (
         ("uv", "run", "pytest"),
-        ("npm", "run", "test:web"),
+        (NPM, "run", "test:web"),
     ),
     "ai-fixtures": (
         ("uv", "run", "python", "scripts/generate_demo_fixtures.py", "--check"),
@@ -70,8 +71,8 @@ TASKS: dict[str, tuple[tuple[str, ...], ...]] = {
     ),
     "build": (
         ("uv", "run", "python", "-m", "compileall", "-q", "apps/api/src"),
-        ("npm", "run", "build:web"),
-        ("npm", "ls", "--all"),
+        (NPM, "run", "build:web"),
+        (NPM, "ls", "--all"),
     ),
     "secret-scan": (
         ("uv", "run", "python", "scripts/check_repository.py"),

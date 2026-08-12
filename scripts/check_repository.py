@@ -22,6 +22,16 @@ FORBIDDEN_PATH_WORDS = {
     "private_document",
 }
 FORBIDDEN_SUFFIXES = {".key", ".p12", ".pfx", ".pem"}
+ALLOWED_BINARY_PATHS = {
+    "fixtures/synthetic/he-ambiguous-date-01.png",
+    "fixtures/synthetic/he-bill-due-date-01.png",
+    "fixtures/synthetic/he-blurry-appointment-01.png",
+    "fixtures/synthetic/he-clinic-appointment-01.png",
+    "fixtures/synthetic/he-conflicting-dates-01.png",
+    "fixtures/synthetic/he-high-risk-medical-01.png",
+    "fixtures/synthetic/he-no-action-notice-01.png",
+    "fixtures/synthetic/he-prompt-injection-01.png",
+}
 SECRET_PATTERNS = {
     "AWS access-key-shaped value": re.compile(r"\b(?:AKIA|ASIA)[A-Z0-9]{16}\b"),
     "private key marker": re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----"),
@@ -77,6 +87,8 @@ def main() -> int:
             failures.append(f"Private-source-shaped path is commit-visible: {relative}")
         text = _read_text(path)
         if text is None:
+            if relative.as_posix() not in ALLOWED_BINARY_PATHS:
+                failures.append(f"Binary file is outside the synthetic-only allowlist: {relative}")
             continue
         for label, pattern in SECRET_PATTERNS.items():
             if pattern.search(text):

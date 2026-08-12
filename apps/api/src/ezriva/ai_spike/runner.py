@@ -16,9 +16,19 @@ from typing import Literal, Protocol
 
 from pydantic import Field
 
-from ezriva.ai_spike.catalog import FixtureManifest, verify_manifest
-from ezriva.ai_spike.gate import GateDisposition, ReasonCode, evaluate_candidate
-from ezriva.ai_spike.schemas import DocumentBriefCandidate, FactKey, StrictSpikeModel
+from ezriva.ai_spike.catalog import ExpectedFact, FixtureManifest, verify_manifest
+from ezriva.ai_spike.gate import (
+    GateDisposition,
+    ReasonCode,
+    evaluate_candidate,
+    normalize_evidence,
+)
+from ezriva.ai_spike.schemas import (
+    DocumentBriefCandidate,
+    EvidenceStatus,
+    FactKey,
+    StrictSpikeModel,
+)
 
 LOGGER = logging.getLogger(__name__)
 HERO_FIXTURE_ID = "he-clinic-appointment-01"
@@ -31,10 +41,12 @@ TERMINAL_PROVIDER_FAILURES = frozenset(
         "bedrock_access_denied",
         "bedrock_provider_error",
         "bedrock_request_rejected",
+        "inference_cycle_limit_exceeded",
         "model_invocation_failed",
         "model_not_found",
         "model_not_ready",
         "model_throttled_no_retry",
+        "provider_boundary_error",
     }
 )
 
@@ -47,7 +59,7 @@ class ProviderObservation(StrictSpikeModel):
     input_tokens: int | None = Field(default=None, ge=0)
     output_tokens: int | None = Field(default=None, ge=0)
     total_tokens: int | None = Field(default=None, ge=0)
-    cycle_count: int = Field(default=0, ge=0, le=1)
+    cycle_count: int = Field(default=0, ge=0)
     failure_code: str | None = Field(default=None, pattern=r"^[a-z0-9_]+$", max_length=80)
 
 
@@ -90,8 +102,9 @@ class FixtureEvaluationRecord(StrictSpikeModel):
     input_tokens: int | None = Field(default=None, ge=0)
     output_tokens: int | None = Field(default=None, ge=0)
     total_tokens: int | None = Field(default=None, ge=0)
-    cycle_count: int = Field(default=0, ge=0, le=1)
+    cycle_count: int = Field(default=0, ge=0)
     failure_code: str | None = None
+    ground_truth_met: bool | None = None
     hero_review: HeroReview | None = None
     executable: Literal[False] = False
 
@@ -121,6 +134,33 @@ def _hero_review(candidate: DocumentBriefCandidate) -> HeroReview:
         if fact.normalized_value is not None and fact.source_excerpt is not None
     )
     return HeroReview(plain_summary=candidate.plain_summary, evidence=evidence)
+
+
+def _expected_facts_met(
+    candidate: DocumentBriefCandidate,
+    expected_facts: tuple[ExpectedFact, ...],
+) -> bool:
+    """Verify fixture ground truth without requiring translated prose to be identical."""
+
+    for expected in expected_facts:
+        matching_facts: tuple[tuple[str, str], ...] = tuple(
+            (fact.normalized_value, fact.source_excerpt)
+            for fact in candidate.facts
+            if fact.key is expected.key
+            and fact.status is EvidenceStatus.CONFIRMED
+            and isinstance(fact.normalized_value, str)
+            and isinstance(fact.source_excerpt, str)
+        )
+        if len(matching_facts) != 1:
+            return False
+        normalized_value, source_excerpt = matching_facts[0]
+        if not (
+            normalize_evidence(expected.required_source_fragment)
+            in normalize_evidence(source_excerpt)
+            and (expected.normalized_value is None or normalized_value == expected.normalized_value)
+        ):
+            return False
+    return True
 
 
 def run_evaluation(
@@ -181,6 +221,11 @@ def run_evaluation(
         else:
             decision = evaluate_candidate(candidate, source_text)
             reasons_met = set(fixture.expected_reason_codes).issubset(decision.reason_codes)
+            ground_truth_met = (
+                _expected_facts_met(candidate, fixture.expected_facts)
+                if fixture.expected_facts
+                else None
+            )
             record = FixtureEvaluationRecord(
                 fixture_id=fixture.id,
                 expected_disposition=fixture.expected_disposition,
@@ -189,7 +234,9 @@ def run_evaluation(
                 reason_codes=decision.reason_codes,
                 schema_valid=True,
                 expected_behavior_met=(
-                    decision.disposition is fixture.expected_disposition and reasons_met
+                    decision.disposition is fixture.expected_disposition
+                    and reasons_met
+                    and ground_truth_met is not False
                 ),
                 latency_ms=observation.latency_ms,
                 input_tokens=observation.input_tokens,
@@ -197,6 +244,7 @@ def run_evaluation(
                 total_tokens=observation.total_tokens,
                 cycle_count=observation.cycle_count,
                 failure_code=observation.failure_code,
+                ground_truth_met=ground_truth_met,
                 hero_review=_hero_review(candidate) if fixture.id == HERO_FIXTURE_ID else None,
             )
         records.append(record)

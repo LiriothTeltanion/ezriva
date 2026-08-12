@@ -1,6 +1,7 @@
 # Item 2 Offline Verification
 
-**Date:** 12 August 2026 (Asia/Jerusalem)  
+**Date:** 12 August 2026 (Asia/Jerusalem)
+
 **Status:** Offline lab verified; live Bedrock acceptance and Pause 1 pending
 
 ## What this proves
@@ -17,10 +18,18 @@
   always unsupported.
 - The Strands adapter exposes no action tools, uses one model turn, disables
   Strands and Botocore retries, and does not request a separate token-count call.
+- A configured inference profile passes preflight only when its underlying
+  foundation model is demonstrably active and accepts image input.
+- The hero gate checks sender, date, time, location, and requested action;
+  stable date/time normalization must match the synthetic ground truth.
+- The live attempt ledger is reserved atomically and records `pending` before a
+  provider call, so a crash cannot silently reuse an uncertain allowance.
 - A terminal provider failure stops the run instead of consuming the remaining
   authorized attempts.
 - Missing usage remains `null`; reports do not invent zero usage or retain raw
   source, prompts, messages, traces, request IDs, account IDs, or provider errors.
+- At this synthetic-only checkpoint, the repository guard permits binary files
+  only for the eight allowlisted fixture PNGs.
 
 The offline runner uses hand-authored schema-valid candidates to test these
 contracts. Those candidates are test data, not mocked proof of model quality.
@@ -30,15 +39,19 @@ contracts. Those candidates are test data, not mocked proof of model quality.
 `python scripts/verify.py ai-fixtures` completed successfully:
 
 - deterministic fixture regeneration check: 8/8 pairs;
-- focused AI-spike tests: 38 passed.
+- focused AI-spike tests: 52 passed.
 
 `python scripts/verify.py verify` completed successfully:
 
 - lock, Ruff, formatting, ESLint, strict mypy, and TypeScript checks;
-- Python tests: 41 passed;
+- Python tests: 55 passed;
 - web tests: 1 passed;
 - Python compilation and production web build;
 - dependency-tree check, repository privacy guardrail, and secret scan.
+
+The contracts were repeated on Windows with Python 3.12.13, Node 24.14.0,
+npm 11.9.0, uv 0.11.33, and PowerShell 7.7.0-preview.3. The separate
+`npm audit --audit-level=high` check reported zero vulnerabilities.
 
 All eight PNGs were inspected at their committed 1600 × 1000 dimensions. The
 right-to-left Hebrew is shaped and legible in the clear fixtures; the blurry

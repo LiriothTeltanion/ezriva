@@ -16,7 +16,7 @@ from typing import Self
 from pydantic import Field, field_validator, model_validator
 
 from ezriva.ai_spike.gate import GateDisposition, ReasonCode
-from ezriva.ai_spike.schemas import StrictSpikeModel
+from ezriva.ai_spike.schemas import FactKey, StrictSpikeModel
 
 EXPECTED_FIXTURE_IDS = frozenset(
     {
@@ -31,6 +31,18 @@ EXPECTED_FIXTURE_IDS = frozenset(
     }
 )
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
+HERO_FIXTURE_ID = "he-clinic-appointment-01"
+HERO_EXPECTED_KEYS = frozenset(
+    {FactKey.SENDER, FactKey.DATE, FactKey.TIME, FactKey.LOCATION, FactKey.REQUESTED_ACTION}
+)
+
+
+class ExpectedFact(StrictSpikeModel):
+    """One stable fixture expectation used only for offline/live evaluation."""
+
+    key: FactKey
+    required_source_fragment: str = Field(min_length=1, max_length=280)
+    normalized_value: str | None = Field(default=None, max_length=240)
 
 
 class FixtureRecord(StrictSpikeModel):
@@ -44,6 +56,7 @@ class FixtureRecord(StrictSpikeModel):
     source_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     expected_disposition: GateDisposition
     expected_reason_codes: tuple[ReasonCode, ...] = ()
+    expected_facts: tuple[ExpectedFact, ...] = Field(default=(), max_length=7)
     synthetic: bool
 
     @field_validator("image_path", "source_path")
@@ -76,6 +89,16 @@ class FixtureManifest(StrictSpikeModel):
             raise ValueError("manifest must contain the exact item-2 fixture allowlist")
         if not all(fixture.synthetic for fixture in self.fixtures):
             raise ValueError("every public fixture must be marked synthetic")
+        hero = next(fixture for fixture in self.fixtures if fixture.id == HERO_FIXTURE_ID)
+        if (
+            len(hero.expected_facts) != len(HERO_EXPECTED_KEYS)
+            or {fact.key for fact in hero.expected_facts} != HERO_EXPECTED_KEYS
+        ):
+            raise ValueError("the hero fixture must define its five stable expected facts")
+        if any(
+            fixture.expected_facts for fixture in self.fixtures if fixture.id != HERO_FIXTURE_ID
+        ):
+            raise ValueError("only the hero fixture may carry expected facts in item 2")
         return self
 
 
@@ -120,6 +143,11 @@ def verify_fixture(root: Path, fixture: FixtureRecord) -> None:
     source_text = source_path.read_text(encoding="utf-8")
     if "מסמך הדגמה סינתטי" not in source_text:
         raise FixtureIntegrityError(f"fixture source lacks the synthetic label: {fixture.id}")
+    for expected in fixture.expected_facts:
+        if expected.required_source_fragment not in source_text:
+            raise FixtureIntegrityError(
+                f"fixture expected source fragment is missing: {fixture.id}/{expected.key}"
+            )
 
 
 def verify_manifest(root: Path, manifest: FixtureManifest) -> None:

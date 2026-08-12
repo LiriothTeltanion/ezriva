@@ -86,14 +86,15 @@ def test_runner_calls_each_fixture_once_and_matches_all_safety_states() -> None:
 
 
 def test_runner_does_not_retry_provider_exceptions(caplog: pytest.LogCaptureFixture) -> None:
-    """One provider error per fixture remains eight total calls, never sixteen."""
+    """An unknown provider-boundary error stops after one call with no retry."""
 
     manifest = load_manifest(ROOT / "fixtures" / "manifest.toml")
     analyzer = FailingAnalyzer()
 
     report = run_evaluation(root=ROOT, manifest=manifest, analyzer=analyzer)
 
-    assert analyzer.calls == 8
+    assert analyzer.calls == 1
+    assert report.attempted_inferences == 1
     assert all(record.failure_code == "provider_boundary_error" for record in report.fixtures)
     assert "sensitive provider detail" not in caplog.text
 
@@ -169,3 +170,92 @@ def test_missing_usage_remains_null_instead_of_becoming_zero() -> None:
     )
 
     assert all(record.total_tokens is None for record in report.fixtures)
+
+
+def test_hero_ground_truth_rejects_wrong_normalized_date() -> None:
+    """A grounded date excerpt cannot legitimize a wrong normalized date."""
+
+    manifest = load_manifest(ROOT / "fixtures" / "manifest.toml")
+    candidates = list(candidates_in_manifest_order())
+    payload = candidates[0].model_dump(mode="json")
+    payload["facts"][1]["normalized_value"] = "2026-08-19"
+    candidates[0] = DocumentBriefCandidate.model_validate(payload)
+
+    report = run_evaluation(
+        root=ROOT,
+        manifest=manifest,
+        analyzer=FakeAnalyzer(tuple(candidates)),
+    )
+
+    hero = report.fixtures[0]
+    assert hero.ground_truth_met is False
+    assert hero.expected_behavior_met is False
+
+
+def test_hero_ground_truth_requires_location() -> None:
+    """The hero cannot pass without a grounded location fact."""
+
+    manifest = load_manifest(ROOT / "fixtures" / "manifest.toml")
+    candidates = list(candidates_in_manifest_order())
+    payload = candidates[0].model_dump(mode="json")
+    payload["facts"] = [fact for fact in payload["facts"] if fact["key"] != "location"]
+    candidates[0] = DocumentBriefCandidate.model_validate(payload)
+
+    report = run_evaluation(
+        root=ROOT,
+        manifest=manifest,
+        analyzer=FakeAnalyzer(tuple(candidates)),
+    )
+
+    hero = report.fixtures[0]
+    assert hero.ground_truth_met is False
+    assert hero.expected_behavior_met is False
+
+
+def test_hero_ground_truth_rejects_a_second_confirmed_time() -> None:
+    """A correct time cannot hide a second contradictory confirmed time."""
+
+    manifest = load_manifest(ROOT / "fixtures" / "manifest.toml")
+    candidates = list(candidates_in_manifest_order())
+    payload = candidates[0].model_dump(mode="json")
+    payload["facts"].append(
+        {
+            "key": "time",
+            "normalized_value": "23:59",
+            "source_excerpt": "בשעה 23:59",
+            "status": "confirmed",
+            "reason": None,
+        }
+    )
+    candidates[0] = DocumentBriefCandidate.model_validate(payload)
+
+    report = run_evaluation(
+        root=ROOT,
+        manifest=manifest,
+        analyzer=FakeAnalyzer(tuple(candidates)),
+    )
+
+    hero = report.fixtures[0]
+    assert hero.ground_truth_met is False
+    assert hero.expected_behavior_met is False
+
+
+def test_hero_ground_truth_allows_translated_location_value() -> None:
+    """Location wording may vary when its Hebrew source evidence is exact."""
+
+    manifest = load_manifest(ROOT / "fixtures" / "manifest.toml")
+    candidates = list(candidates_in_manifest_order())
+    payload = candidates[0].model_dump(mode="json")
+    location = next(fact for fact in payload["facts"] if fact["key"] == "location")
+    location["normalized_value"] = "12 Rehov HaDugma, Be'er Sheva"
+    candidates[0] = DocumentBriefCandidate.model_validate(payload)
+
+    report = run_evaluation(
+        root=ROOT,
+        manifest=manifest,
+        analyzer=FakeAnalyzer(tuple(candidates)),
+    )
+
+    hero = report.fixtures[0]
+    assert hero.ground_truth_met is True
+    assert hero.expected_behavior_met is True
