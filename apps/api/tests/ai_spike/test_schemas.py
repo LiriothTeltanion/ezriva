@@ -48,8 +48,8 @@ def test_confirmed_fact_requires_hebrew_evidence() -> None:
     with pytest.raises(ValidationError):
         EvidenceFact(
             key=FactKey.DATE,
-            normalized_value="2026-08-18",
-            source_excerpt="Date: 18 August 2026",
+            normalized_value="2027-04-18",
+            source_excerpt="Date: 18 April 2027",
             status=EvidenceStatus.CONFIRMED,
         )
 
@@ -64,3 +64,23 @@ def test_not_found_fact_cannot_carry_a_guessed_value() -> None:
             source_excerpt=None,
             status=EvidenceStatus.NOT_FOUND,
         )
+
+
+def test_candidate_rejects_bidi_override_in_evidence() -> None:
+    """A model cannot visually spoof an otherwise valid Hebrew excerpt."""
+
+    payload = hero_candidate().model_dump(mode="json")
+    payload["facts"][0]["source_excerpt"] = "מרכז\u202e בריאות אופק"
+
+    with pytest.raises(ValidationError, match="bidi control"):
+        DocumentBriefCandidate.model_validate(payload)
+
+
+def test_candidate_rejects_bidi_isolate_in_summary() -> None:
+    """Top-level model prose follows the same invisible-control boundary."""
+
+    payload = hero_candidate().model_dump(mode="json")
+    payload["plain_summary"] = f"{payload['plain_summary']}\u2067"
+
+    with pytest.raises(ValidationError, match="bidi control"):
+        DocumentBriefCandidate.model_validate(payload)

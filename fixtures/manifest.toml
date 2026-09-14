@@ -5,13 +5,13 @@ id = "he-clinic-appointment-01"
 scenario = "hero_appointment"
 image_path = "fixtures/synthetic/he-clinic-appointment-01.png"
 source_path = "fixtures/synthetic/he-clinic-appointment-01.txt"
-image_sha256 = "8b48134d29305c1ef8571bdc737308c67d77da724bf61ca83b6c38bb86f8a485"  # pragma: allowlist secret
-source_sha256 = "90950506251a268fbba5dc80f37abb3ccd7e855454d425511b44ec93e4fe6702"  # pragma: allowlist secret
+image_sha256 = "fde00a239018bbc6a6da0e2568fb788c87ca36a3f160b6cb1f2c3917ccb28041"  # pragma: allowlist secret
+source_sha256 = "31d697231f281388278d69832bbd2c825595e4eb6c1881da49159df488f12932"  # pragma: allowlist secret
 expected_disposition = "eligible_for_reminder_review"
 expected_reason_codes = ["clear_appointment", "reminder_review_only"]
 expected_facts = [
   { key = "sender", required_source_fragment = "מרכז בריאות אופק" },
-  { key = "date", required_source_fragment = "18.08.2026", normalized_value = "2026-08-18" },
+  { key = "date", required_source_fragment = "18.04.2027", normalized_value = "2027-04-18" },
   { key = "time", required_source_fragment = "10:30", normalized_value = "10:30" },
   { key = "location", required_source_fragment = "רחוב הדוגמה 12, באר שבע" },
   { key = "requested_action", required_source_fragment = "נא להגיע 15 דקות מראש ולהביא כרטיס קופה" },

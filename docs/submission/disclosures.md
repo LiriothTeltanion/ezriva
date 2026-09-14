@@ -24,11 +24,13 @@
 
 ## Assets and data
 
-- Eight public Hebrew fixtures were written for Ezriva and rendered by the
-  repository's deterministic Pillow generator. They were not derived from a
-  private or real-world document.
-- Fixture rendering uses a locally installed Hebrew-capable DejaVu Sans or
-  Arial font with libraqm shaping. No third-party font file is redistributed.
+- Eight public Hebrew fixtures were written for Ezriva and were not derived
+  from a private or real-world document. Seven current PNGs were rendered by
+  the repository's deterministic Pillow generator. The revised hero was
+  rendered from the same synthetic source with the local Microsoft Edge Beta
+  153 Chromium text engine because the Windows Pillow wheel lacked libraqm.
+- The Pillow path uses a locally installed Hebrew-capable DejaVu Sans or Arial
+  font with libraqm shaping. No third-party font file is redistributed.
 - Fixture source, scenarios, expected safety behavior, and integrity hashes are
   documented in `fixtures/provenance.md` and `fixtures/manifest.toml`.
 - No real family document, private contract, signature, address, or identifier

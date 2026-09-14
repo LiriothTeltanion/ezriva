@@ -6,10 +6,11 @@ Build the smallest complete, safe, original Ezriva MVP for the Agents for Humans
 
 ## Required Context
 
-Read the public build documents in this order: `scope.md`, `prd.md`,
-`brand-ux.md`, `spec.md`, and `checklist.md`. Do not restart planning or
-silently override scope, acceptance criteria, architecture, or checklist
-sequencing.
+Start with `START-HERE.md`, then read `CODEX-HANDOFF.md` completely and
+follow its repository reading order. The canonical public build documents
+remain `scope.md`, `prd.md`, `brand-ux.md`, `spec.md`, and `checklist.md`. Do
+not restart planning or silently override scope, acceptance criteria,
+architecture, or checklist sequencing.
 
 ## Authority And Scope
 

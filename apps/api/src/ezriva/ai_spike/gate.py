@@ -16,6 +16,7 @@ from typing import Literal
 from pydantic import Field
 
 from ezriva.ai_spike.schemas import (
+    BIDI_CONTROLS,
     DocumentBriefCandidate,
     DocumentType,
     EvidenceFact,
@@ -26,19 +27,6 @@ from ezriva.ai_spike.schemas import (
     StrictSpikeModel,
 )
 
-BIDI_CONTROLS = frozenset(
-    {
-        "\u202a",
-        "\u202b",
-        "\u202c",
-        "\u202d",
-        "\u202e",
-        "\u2066",
-        "\u2067",
-        "\u2068",
-        "\u2069",
-    }
-)
 AMBIGUOUS_NUMERIC_DATE = re.compile(r"(?<!\d)(0?[1-9]|1[0-2])/(0?[1-9]|1[0-2])/\d{4}(?!\d)")
 NUMERIC_DATE_TOKEN = re.compile(
     r"(?<!\d)(?:0?[1-9]|[12]\d|3[01])[./-](?:0?[1-9]|1[0-2])[./-]\d{4}(?!\d)"
