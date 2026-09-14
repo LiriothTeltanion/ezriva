@@ -1,0 +1,58 @@
+name: Dependabot auto-merge
+
+# Las actualizaciones de parche y menores se fusionan solas en cuanto pasan las
+# comprobaciones obligatorias de la rama: esas comprobaciones son el revisor.
+#
+# Se quedan esperando a Kevin, sin excepcion:
+# - las de version mayor, porque pueden romper sin que las pruebas lo vean
+#   (Tailwind 4 compilaba y pasaba las pruebas, pero perdia los colores propios);
+# - cualquier actualizacion en la que haya cambiado el mantenedor del paquete,
+#   que es el patron tipico de un ataque a la cadena de suministro.
+#
+# Este workflow solo ARMA el auto-merge. Si una comprobacion falla, GitHub no
+# fusiona nada: no hay forma de que este fichero salte una puerta de calidad.
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  arm-auto-merge:
+    name: Arm auto-merge for safe Dependabot updates
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository_owner == 'LiriothTeltanion'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Read Dependabot metadata
+        id: meta
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+
+      - name: Arm auto-merge for patch, minor and digest updates
+        if: >-
+          steps.meta.outputs.update-type != 'version-update:semver-major'
+          && steps.meta.outputs.maintainer-changes != 'true'
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Leave major updates and maintainer changes for Kevin
+        if: >-
+          steps.meta.outputs.update-type == 'version-update:semver-major'
+          || steps.meta.outputs.maintainer-changes == 'true'
+        # Los valores entran por variables de entorno y no interpolados en el
+        # script: un nombre de paquete no debe poder ejecutarse como shell.
+        run: >-
+          echo "::notice title=Waiting for Kevin::$NAMES $FROM -> $TO
+          ($KIND, maintainer changed: $MAINTAINER)"
+        env:
+          NAMES: ${{ steps.meta.outputs.dependency-names }}
+          FROM: ${{ steps.meta.outputs.previous-version }}
+          TO: ${{ steps.meta.outputs.new-version }}
+          KIND: ${{ steps.meta.outputs.update-type }}
+          MAINTAINER: ${{ steps.meta.outputs.maintainer-changes }}
