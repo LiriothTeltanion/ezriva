@@ -42,12 +42,12 @@ def hero_candidate() -> DocumentBriefCandidate:
         document_type=DocumentType.APPOINTMENT,
         readability=Readability.READABLE,
         plain_summary=(
-            "Es un aviso sintético de una cita para una prueba de audición el 18 de agosto "
-            "de 2026 a las 10:30 en Beerseba. Pide llegar 15 minutos antes."
+            "Es un aviso sintético de una cita para una prueba de audición el 18 de abril "
+            "de 2027 a las 10:30 en Beerseba. Pide llegar 15 minutos antes."
         ),
         facts=(
             _fact(FactKey.SENDER, "Centro de Salud Ofek", "מרכז בריאות אופק"),
-            _fact(FactKey.DATE, "2026-08-18", "מועד: 18.08.2026"),
+            _fact(FactKey.DATE, "2027-04-18", "מועד: 18.04.2027"),
             _fact(FactKey.TIME, "10:30", "בשעה 10:30"),
             _fact(FactKey.LOCATION, "Calle de Ejemplo 12, Beerseba", "רחוב הדוגמה 12, באר שבע"),
             _fact(

@@ -31,6 +31,9 @@ EXPECTED_FIXTURE_IDS = frozenset(
     }
 )
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
+PNG_IHDR_MARKER = b"\x00\x00\x00\rIHDR"
+MAX_FIXTURE_IMAGE_BYTES = 3_670_016
+EXPECTED_FIXTURE_IMAGE_SIZE = (1_600, 1_000)
 HERO_FIXTURE_ID = "he-clinic-appointment-01"
 HERO_EXPECTED_KEYS = frozenset(
     {FactKey.SENDER, FactKey.DATE, FactKey.TIME, FactKey.LOCATION, FactKey.REQUESTED_ACTION}
@@ -125,7 +128,7 @@ def load_manifest(path: Path) -> FixtureManifest:
 
 
 def verify_fixture(root: Path, fixture: FixtureRecord) -> None:
-    """Verify paths, bytes, and visible synthetic labeling for one fixture."""
+    """Verify paths, bounded PNG metadata, hashes, and synthetic labeling."""
 
     image_path = (root / fixture.image_path).resolve()
     source_path = (root / fixture.source_path).resolve()
@@ -134,8 +137,19 @@ def verify_fixture(root: Path, fixture: FixtureRecord) -> None:
         raise FixtureIntegrityError(f"fixture path escaped the synthetic root: {fixture.id}")
     if not image_path.is_file() or not source_path.is_file():
         raise FixtureIntegrityError(f"fixture file is missing: {fixture.id}")
-    if image_path.read_bytes()[:8] != PNG_SIGNATURE:
+    image_size = image_path.stat().st_size
+    if image_size > MAX_FIXTURE_IMAGE_BYTES:
+        raise FixtureIntegrityError(f"fixture image exceeds the size limit: {fixture.id}")
+    with image_path.open("rb") as stream:
+        header = stream.read(24)
+    if len(header) != 24 or header[:8] != PNG_SIGNATURE or header[8:16] != PNG_IHDR_MARKER:
         raise FixtureIntegrityError(f"fixture image is not PNG: {fixture.id}")
+    dimensions = (
+        int.from_bytes(header[16:20], byteorder="big"),
+        int.from_bytes(header[20:24], byteorder="big"),
+    )
+    if dimensions != EXPECTED_FIXTURE_IMAGE_SIZE:
+        raise FixtureIntegrityError(f"fixture image dimensions are invalid: {fixture.id}")
     if sha256_file(image_path) != fixture.image_sha256:
         raise FixtureIntegrityError(f"fixture image hash mismatch: {fixture.id}")
     if sha256_file(source_path) != fixture.source_sha256:

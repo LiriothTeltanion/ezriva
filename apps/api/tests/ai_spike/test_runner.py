@@ -77,7 +77,10 @@ def test_runner_calls_each_fixture_once_and_matches_all_safety_states() -> None:
     assert report.attempted_inferences == 8
     assert all(record.expected_behavior_met for record in report.fixtures)
     assert all(record.executable is False for record in report.fixtures)
-    assert report.raw_content_retained is False
+    assert report.schema_version == 2
+    assert report.full_source_retained is False
+    assert report.synthetic_hero_review_retained is True
+    assert "raw_content_retained" not in report.model_dump()
     assert report.action_tools_exposed == ()
     assert sum(record.hero_review is not None for record in report.fixtures) == 1
     bill = next(record for record in report.fixtures if record.fixture_id == "he-bill-due-date-01")
@@ -120,6 +123,7 @@ def test_runner_stops_after_one_terminal_provider_failure() -> None:
     assert analyzer.calls == 1
     assert report.attempted_inferences == 1
     assert report.fixtures[0].failure_code == "bedrock_access_denied"
+    assert report.synthetic_hero_review_retained is False
 
 
 def test_runner_refuses_a_cap_below_the_manifest_before_any_call() -> None:
@@ -259,3 +263,39 @@ def test_hero_ground_truth_allows_translated_location_value() -> None:
     hero = report.fixtures[0]
     assert hero.ground_truth_met is True
     assert hero.expected_behavior_met is True
+
+
+def test_hero_review_retains_only_expected_confirmed_evidence() -> None:
+    """Uncertain duplicate facts never appear as evidence in the manual review."""
+
+    manifest = load_manifest(ROOT / "fixtures" / "manifest.toml")
+    candidates = list(candidates_in_manifest_order())
+    payload = candidates[0].model_dump(mode="json")
+    payload["facts"].append(
+        {
+            "key": "location",
+            "normalized_value": "Ubicación todavía incierta",
+            "source_excerpt": "רחוב הדוגמה 12, באר שבע",
+            "status": "uncertain",
+            "reason": "El modelo produjo una segunda interpretación.",
+        }
+    )
+    candidates[0] = DocumentBriefCandidate.model_validate(payload)
+
+    report = run_evaluation(
+        root=ROOT,
+        manifest=manifest,
+        analyzer=FakeAnalyzer(tuple(candidates)),
+    )
+
+    review = report.fixtures[0].hero_review
+    assert review is not None
+    assert len(review.evidence) == 5
+    assert {item.key.value for item in review.evidence} == {
+        "sender",
+        "date",
+        "time",
+        "location",
+        "requested_action",
+    }
+    assert all(item.normalized_value != "Ubicación todavía incierta" for item in review.evidence)

@@ -112,18 +112,23 @@ class FixtureEvaluationRecord(StrictSpikeModel):
 class EvaluationReport(StrictSpikeModel):
     """Sanitized report for one bounded Bedrock evaluation run."""
 
-    schema_version: int = 1
+    schema_version: Literal[2] = 2
     generated_at: datetime
     model_id: str
     region: str
     authorized_inference_cap: int = Field(ge=1, le=8)
     attempted_inferences: int = Field(ge=0, le=8)
     fixtures: tuple[FixtureEvaluationRecord, ...]
-    raw_content_retained: bool = False
+    full_source_retained: Literal[False] = False
+    synthetic_hero_review_retained: bool
     action_tools_exposed: tuple[str, ...] = ()
 
 
-def _hero_review(candidate: DocumentBriefCandidate) -> HeroReview:
+def _hero_review(
+    candidate: DocumentBriefCandidate,
+    expected_facts: tuple[ExpectedFact, ...],
+) -> HeroReview:
+    expected_keys = {expected.key for expected in expected_facts}
     evidence = tuple(
         EvidenceReview(
             key=fact.key,
@@ -131,7 +136,10 @@ def _hero_review(candidate: DocumentBriefCandidate) -> HeroReview:
             source_excerpt=fact.source_excerpt,
         )
         for fact in candidate.facts
-        if fact.normalized_value is not None and fact.source_excerpt is not None
+        if fact.key in expected_keys
+        and fact.status is EvidenceStatus.CONFIRMED
+        and fact.normalized_value is not None
+        and fact.source_excerpt is not None
     )
     return HeroReview(plain_summary=candidate.plain_summary, evidence=evidence)
 
@@ -245,7 +253,11 @@ def run_evaluation(
                 cycle_count=observation.cycle_count,
                 failure_code=observation.failure_code,
                 ground_truth_met=ground_truth_met,
-                hero_review=_hero_review(candidate) if fixture.id == HERO_FIXTURE_ID else None,
+                hero_review=(
+                    _hero_review(candidate, fixture.expected_facts)
+                    if fixture.id == HERO_FIXTURE_ID
+                    else None
+                ),
             )
         records.append(record)
         LOGGER.info(
@@ -261,11 +273,15 @@ def run_evaluation(
     generated_at = now()
     if generated_at.tzinfo is None or generated_at.utcoffset() is None:
         raise ValueError("report clock must return an aware datetime")
+    fixture_records = tuple(records)
     return EvaluationReport(
         generated_at=generated_at,
         model_id=analyzer.model_id,
         region=analyzer.region,
         authorized_inference_cap=inference_cap,
         attempted_inferences=len(records),
-        fixtures=tuple(records),
+        fixtures=fixture_records,
+        synthetic_hero_review_retained=any(
+            record.hero_review is not None for record in fixture_records
+        ),
     )

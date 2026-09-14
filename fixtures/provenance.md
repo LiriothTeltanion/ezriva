@@ -29,11 +29,13 @@ submit anything.
 ## How the files are made
 
 `scripts/generate_demo_fixtures.py` owns the logical Hebrew source strings and
-renders 1600 × 1000 PNGs with Pillow. Correct right-to-left shaping requires a
-Pillow build with libraqm and a local Hebrew-capable DejaVu Sans or Arial font.
-The font file is not copied into this repository. The blurry fixture applies a
-deterministic Gaussian blur only to its document content; its synthetic-demo
-labels remain visible.
+is the canonical Pillow recipe for the 1600 x 1000 fixture set. Correct
+right-to-left shaping requires a Pillow build with libraqm and a local
+Hebrew-capable DejaVu Sans or Arial font. The font file is not copied into this
+repository. Seven current PNGs were produced through that Pillow path. The
+revised hero uses the documented Chromium exception below. The blurry fixture
+applies a deterministic Gaussian blur only to its document content; its
+synthetic-demo labels remain visible.
 
 Each PNG has a sibling UTF-8 `.txt` file containing the logical source of truth
 used for exact evidence comparison. `fixtures/manifest.toml` allowlists exactly
@@ -55,3 +57,18 @@ uv run python scripts/generate_demo_fixtures.py --check
 The offline verification command checks the generator definitions, manifest,
 hashes, paths, PNG signatures, file bounds, and visible synthetic-source label.
 It does not call Strands, Bedrock, or any other model provider.
+
+## Hero fixture revision
+
+On 8 September 2026, before the first live Bedrock evaluation, the synthetic
+hero appointment date changed from 18 August 2026 to 18 April 2027 so the demo
+would not prepare a reminder for a past event. The notice remains fully
+synthetic; its logical source, PNG, expectations, and SHA-256 values changed
+together.
+
+The installed Pillow 12.3.0 Windows wheel did not provide libraqm, so the
+canonical generator correctly refused to create an incorrectly shaped Hebrew
+image. The revised hero PNG was rendered locally from the same synthetic text
+with Microsoft Edge Beta 153's Chromium text engine, then visually inspected at
+1600 x 1000. The committed PNG and UTF-8 source remain the evaluation inputs;
+no generated model response or private data was used to make them.

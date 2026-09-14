@@ -9,12 +9,41 @@ Date: 2026-08-12 (Asia/Jerusalem)
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping
 from enum import StrEnum
 from typing import Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 HEBREW_PATTERN = re.compile(r"[\u0590-\u05ff]")
+BIDI_CONTROLS = frozenset(
+    {
+        "\u061c",
+        "\u200e",
+        "\u200f",
+        "\u202a",
+        "\u202b",
+        "\u202c",
+        "\u202d",
+        "\u202e",
+        "\u2066",
+        "\u2067",
+        "\u2068",
+        "\u2069",
+    }
+)
+
+
+def _contains_bidi_control(value: object) -> bool:
+    """Return whether nested untrusted model data contains a bidi control."""
+
+    if isinstance(value, str):
+        return any(character in BIDI_CONTROLS for character in value)
+    if isinstance(value, Mapping):
+        return any(_contains_bidi_control(item) for item in value.values())
+    if isinstance(value, (list, tuple, set, frozenset)):
+        return any(_contains_bidi_control(item) for item in value)
+    return False
 
 
 class LanguageCode(StrEnum):
@@ -80,6 +109,15 @@ class StrictSpikeModel(BaseModel):
     """Base configuration for untrusted structured model output."""
 
     model_config = ConfigDict(extra="forbid", frozen=True, str_strip_whitespace=True)
+
+    @model_validator(mode="before")
+    @classmethod
+    def reject_bidi_controls(cls, value: object) -> object:
+        """Reject invisible direction controls before nested validation."""
+
+        if _contains_bidi_control(value):
+            raise ValueError("structured text cannot contain bidi control characters")
+        return value
 
 
 class EvidenceFact(StrictSpikeModel):
