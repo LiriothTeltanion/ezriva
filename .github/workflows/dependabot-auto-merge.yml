@@ -1,16 +1,16 @@
 name: Dependabot auto-merge
 
-# Las actualizaciones de parche y menores se fusionan solas en cuanto pasan las
-# comprobaciones obligatorias de la rama: esas comprobaciones son el revisor.
+# Patch and minor updates merge on their own once the branch's required checks
+# pass: those checks are the reviewer.
 #
-# Se quedan esperando a Kevin, sin excepcion:
-# - las de version mayor, porque pueden romper sin que las pruebas lo vean
-#   (Tailwind 4 compilaba y pasaba las pruebas, pero perdia los colores propios);
-# - cualquier actualizacion en la que haya cambiado el mantenedor del paquete,
-#   que es el patron tipico de un ataque a la cadena de suministro.
+# These always wait for Kevin:
+# - major versions, because they can break things the tests do not see
+#   (Tailwind 4 built and passed the tests but lost the custom colours);
+# - any update whose package maintainer changed, the typical pattern of a
+#   supply-chain attack.
 #
-# Este workflow solo ARMA el auto-merge. Si una comprobacion falla, GitHub no
-# fusiona nada: no hay forma de que este fichero salte una puerta de calidad.
+# This workflow only ARMS auto-merge. If a check fails, GitHub merges nothing:
+# this file cannot skip a quality gate.
 
 on:
   pull_request:
@@ -45,8 +45,8 @@ jobs:
         if: >-
           steps.meta.outputs.update-type == 'version-update:semver-major'
           || steps.meta.outputs.maintainer-changes == 'true'
-        # Los valores entran por variables de entorno y no interpolados en el
-        # script: un nombre de paquete no debe poder ejecutarse como shell.
+        # Values arrive through environment variables, never interpolated into
+        # the script: a package name must not be able to run as shell.
         run: >-
           echo "::notice title=Waiting for Kevin::$NAMES $FROM -> $TO
           ($KIND, maintainer changed: $MAINTAINER)"
