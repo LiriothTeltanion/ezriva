@@ -31,7 +31,9 @@ updates:
     commit-message:
       prefix: chore(deps)
 
-  - package-ecosystem: pip
+  # uv, not pip: the project is locked with uv.lock, and only the uv ecosystem
+  # updates that lockfile. With pip, CI's `uv lock --check` rejects every PR.
+  - package-ecosystem: uv
     directory: /
     schedule:
       interval: monthly
@@ -43,7 +45,7 @@ updates:
       semver-patch-days: 3
     open-pull-requests-limit: 5
     groups:
-      pip-minor-patch:
+      uv-minor-patch:
         update-types: [minor, patch]
     labels: [dependencies]
     commit-message:
