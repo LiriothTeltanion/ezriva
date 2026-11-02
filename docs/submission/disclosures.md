@@ -9,8 +9,8 @@
 
 ## AI-assisted work
 
-- ChatGPT and Codex assisted with research, planning, scaffolding, code,
-  documentation, and review.
+- ChatGPT, Codex, and Claude Code assisted with research, planning,
+  scaffolding, code, documentation, and review.
 - Kevin chooses product direction and reviews checkpoint behavior.
 
 ## Starters and libraries

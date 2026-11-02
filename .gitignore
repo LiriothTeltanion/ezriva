@@ -38,3 +38,9 @@ Thumbs.db
 
 # Never import the outer planning attachments into this repository
 project_sources/
+
+# Local-only notes for coding assistants. They stay on Kevin's machines and are
+# not published. The required AI disclosure lives in docs/submission/disclosures.md.
+/AGENTS.md
+/CODEX-HANDOFF.md
+/START-HERE.md

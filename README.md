@@ -167,6 +167,8 @@ was copied from IvritSheli or any prior Kevin Cusnir project. See
 [`disclosures.md`](docs/submission/disclosures.md) for starters, libraries, AI
 assistance, and non-code inspiration.
 
+Built with AI-assisted tooling; I reviewed, tested and can explain every change.
+
 ## License
 
 [MIT](LICENSE) © 2026 Kevin Cusnir.

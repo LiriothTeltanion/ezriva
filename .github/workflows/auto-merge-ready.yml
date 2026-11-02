@@ -1,0 +1,47 @@
+name: Auto-merge when ready
+
+# Kevin's own pull requests merge on their own once they are ready for review
+# and every required check has passed. Drafts are never armed: a draft is the
+# brake, and turning a pull request back into a draft disarms it.
+#
+# This workflow only ARMS auto-merge. If a required check fails, GitHub merges
+# nothing: this file cannot skip a quality gate.
+#
+# AUTO_MERGE_TOKEN is an optional fine-grained token owned by Kevin. A merge
+# armed with it counts as his, so workflows that run on pushes to main (Pages
+# deploys, CodeQL) start after the merge. Without it the workflow falls back to
+# GITHUB_TOKEN: the merge still happens, but by GitHub's design it starts no
+# new workflow run on main.
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review, converted_to_draft]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    name: Arm auto-merge for ready pull requests
+    if: >-
+      github.repository_owner == 'LiriothTeltanion'
+      && github.event.pull_request.user.login == 'LiriothTeltanion'
+      && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Arm squash auto-merge
+        if: github.event.action != 'converted_to_draft' && github.event.pull_request.draft == false
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.AUTO_MERGE_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Disarm auto-merge when the pull request becomes a draft
+        if: github.event.action == 'converted_to_draft' && github.event.pull_request.auto_merge != null
+        run: gh pr merge --disable-auto "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.AUTO_MERGE_TOKEN || secrets.GITHUB_TOKEN }}

@@ -392,7 +392,6 @@ only when their checklist item produces real implementation or evidence.
 
 ```text
 ezriva/
-├── AGENTS.md                         # Project rules and Codex handoff
 ├── README.md                         # English public documentation
 ├── LICENSE                           # MIT
 ├── SECURITY.md                       # Threat model and reporting
