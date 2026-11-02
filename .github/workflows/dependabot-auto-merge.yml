@@ -39,7 +39,9 @@ jobs:
         run: gh pr merge --auto --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # AUTO_MERGE_TOKEN (a Dependabot secret) makes the merge the owner's, so
+          # Pages and CodeQL run on main; without it GITHUB_TOKEN still merges.
+          GH_TOKEN: ${{ secrets.AUTO_MERGE_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Leave major updates and maintainer changes for Kevin
         if: >-
