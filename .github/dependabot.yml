@@ -1,0 +1,66 @@
+version: 2
+
+# Monthly, like NovaMusicLab and IvritSheli: a weekly cadence opened five or more
+# PRs per batch even when no code had changed. Security alerts do not follow this
+# schedule; they arrive as soon as an advisory is published.
+#
+# cooldown: a freshly published version waits a few days before it is proposed.
+# Broken releases are usually yanked or patched in that window, and major
+# versions, the ones that can break things, wait a month.
+#
+# Minor and patch updates arrive grouped. They merge on their own once the required
+# checks pass (.github/workflows/dependabot-auto-merge.yml).
+# Major updates arrive one by one and wait for Kevin.
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+      time: '05:00'
+      timezone: Asia/Jerusalem
+    cooldown:
+      semver-major-days: 30
+      semver-minor-days: 7
+      semver-patch-days: 3
+    open-pull-requests-limit: 5
+    groups:
+      npm-minor-patch:
+        update-types: [minor, patch]
+    labels: [dependencies]
+    commit-message:
+      prefix: chore(deps)
+
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: monthly
+      time: '05:15'
+      timezone: Asia/Jerusalem
+    cooldown:
+      semver-major-days: 30
+      semver-minor-days: 7
+      semver-patch-days: 3
+    open-pull-requests-limit: 5
+    groups:
+      pip-minor-patch:
+        update-types: [minor, patch]
+    labels: [dependencies]
+    commit-message:
+      prefix: chore(deps)
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+      time: '05:30'
+      timezone: Asia/Jerusalem
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 3
+    groups:
+      actions-all:
+        patterns: ['*']
+    labels: [dependencies]
+    commit-message:
+      prefix: ci
