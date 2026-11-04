@@ -45,3 +45,9 @@ project_sources/
 # with technical guidance only.
 /CODEX-HANDOFF.md
 /START-HERE.md
+
+# Local private agent context (never committed)
+AGENTS.local.md
+CLAUDE.local.md
+*.local.md
+.claude/settings.local.json

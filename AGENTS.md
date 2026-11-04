@@ -4,6 +4,10 @@ Guide for every coding agent (Claude Code, Codex, Copilot, Cursor, Gemini)
 and human contributor working in this repository. Read it before your first
 edit. `CLAUDE.md` imports this file.
 
+Local, private context for this repo may exist in `AGENTS.local.md` and
+`CLAUDE.local.md`. They are git-ignored, never committed, and should be read
+when present.
+
 **Ezriva** ("Clear help. Safe next steps.") is a multilingual,
 accessibility-first family navigation agent built for the Agents for Humans
 Hackathon. It turns a routine Hebrew notice into an evidence-backed Spanish or
@@ -212,8 +216,10 @@ make test-ai-fixtures-live    # live Bedrock run: needs an AWS session Kevin con
   If a section above defines a different body format for this repository,
   that one wins.
 
-  Commits written with an AI assistant add the matching `Co-Authored-By:`
-  trailer. Lirioth is never a co-author.
+  Commit authorship: every commit, PR title and PR description is authored
+  by Kevin Cusnir (Lirioth Teltanion). Do not add AI co-author trailers,
+  "Generated with/by" footers, session links or AI tool or model names to
+  Git metadata. (Policy updated 2026-11-04.)
 - **Author identity:** `Kevin Cusnir (Lirioth Teltanion)`.
 - One concern per commit and per pull request. Small vertical slices that can
   ship on their own beat big rewrites.
